@@ -5,6 +5,55 @@ from colorama import Fore, Style, Back
 from time import sleep
 from os import system
 import threading
+import sys
+
+class TokenManager:
+    def __init__(self):
+        self.token_url = "https://scorpion292439.github.io/scorpion-sms-bomber/"
+        self.verify_url = "https://ipchecer-default-rtdb.firebaseio.com/tokens.json"
+        self.token = None
+    
+    def get_token_from_user(self):
+        system("clear")
+        print(f"""
+{Fore.RED + Style.BRIGHT}
+    ╔══════════════════════════════════════════════════════════════════════════════╗
+    ║                                                                              ║
+    ║                            TOKEN DOĞRULAMA SİSTEMİ                           ║
+    ║                                                                              ║
+    ╚══════════════════════════════════════════════════════════════════════════════╝
+{Style.RESET_ALL}""")
+        
+        print(f"{Fore.YELLOW + Style.BRIGHT}🔐 Token Yok! Lütfen aşağıdaki adresten token alın:{Style.RESET_ALL}")
+        print(f"{Fore.CYAN + Style.BRIGHT}🌐 Site: {self.token_url}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW + Style.BRIGHT}📝 Token: {Fore.GREEN}", end="")
+        token = input().strip()
+        
+        if self.verify_token(token):
+            self.token = token
+            print(f"{Fore.GREEN + Style.BRIGHT}✅ Token doğrulandı! Scorpion SMS Bomber başlatılıyor...{Style.RESET_ALL}")
+            sleep(2)
+            return True
+        else:
+            print(f"{Fore.RED + Style.BRIGHT}❌ Geçersiz token! Lütfen doğru tokeni girin.{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW + Style.BRIGHT}🔑 Yeni token almak için: {self.token_url}{Style.RESET_ALL}")
+            sleep(3)
+            return False
+    
+    def verify_token(self, token):
+        try:
+            response = requests.get(self.verify_url, timeout=10)
+            if response.status_code == 200:
+                tokens_data = response.json()
+                if tokens_data:
+                    for key, data in tokens_data.items():
+                        if data.get('token') == token:
+                            print(f"{Fore.GREEN + Style.BRIGHT}👤 Hoş geldiniz: {data.get('email', 'Kullanıcı')}{Style.RESET_ALL}")
+                            return True
+            return False
+        except Exception as e:
+            print(f"{Fore.RED + Style.BRIGHT}⚠️ Token doğrulama hatası: {str(e)}{Style.RESET_ALL}")
+            return False
 
 class SendSms():
     adet = 0
@@ -169,13 +218,6 @@ class SendSms():
         except:
             print(f"{Fore.RED + Style.BRIGHT}🦂{Fore.RED} [STRIKE MISS]{Style.RESET_ALL} {Fore.LIGHTRED_EX}Target Evaded!{Style.RESET_ALL} {self.phone} --> {Fore.CYAN}frontend.dominos.com.tr{Style.RESET_ALL}")
 
-servisler_sms = []
-for attribute in dir(SendSms):
-    attribute_value = getattr(SendSms, attribute)
-    if callable(attribute_value):
-        if attribute.startswith('__') == False:
-            servisler_sms.append(attribute)
-
 def print_banner():
     banner = f"""
 {Fore.RED + Style.BRIGHT}
@@ -190,152 +232,170 @@ def print_banner():
     ║                                                                              ║
     ╚══════════════════════════════════════════════════════════════════════════════╝
 {Fore.YELLOW + Style.BRIGHT}    SMS Bomber v2.0 | Powered by {Fore.RED + Style.BRIGHT}Scorpion{Fore.YELLOW + Style.BRIGHT} | Termux Edition
-{Fore.GREEN + Style.BRIGHT}    Available Services: {len(servisler_sms)}
+{Fore.GREEN + Style.BRIGHT}    Token Doğrulama Sistemi Aktif
 {Style.RESET_ALL}
 """
     print(banner)
 
-while True:
-    system("clear")  # Termux için clear kullan
-    print_banner()
+def main():
+    # Token kontrolü
+    token_manager = TokenManager()
     
-    try:
-        menu = input(f"{Fore.MAGENTA + Style.BRIGHT + Back.BLACK}╔═[ {Fore.WHITE}SCORPION MENU{Fore.MAGENTA} ]═╗{Style.RESET_ALL}\n"
-                     f"{Fore.CYAN + Style.BRIGHT}║{Fore.WHITE} 1. {Fore.GREEN}SMS Gönder (Normal Mode){Fore.WHITE}           ║{Style.RESET_ALL}\n"
-                     f"{Fore.CYAN}║{Fore.WHITE} 2. {Fore.GREEN}SMS Gönder (Turbo Mode){Fore.WHITE}           ║{Style.RESET_ALL}\n"
-                     f"{Fore.CYAN}║{Fore.WHITE} 3. {Fore.RED}Çıkış / Exit{Fore.WHITE}                     ║{Style.RESET_ALL}\n"
-                     f"{Fore.MAGENTA + Style.BRIGHT}╚{'═' * 48}╝{Style.RESET_ALL}\n\n"
-                     f"{Fore.YELLOW + Style.BRIGHT}Seçimini Yap / Choose: {Fore.GREEN}")
-        if menu == "":
-            continue
-        menu = int(menu)
-    except ValueError:
-        print(f"{Fore.RED + Style.BRIGHT}❌ Hatalı Giriş! Lütfen Sayı Giriniz. / Invalid Input! Please Enter a Number.{Style.RESET_ALL}")
-        sleep(3)
-        continue
-
-    if menu == 1:
-        print_banner()
-        print(f"{Fore.YELLOW + Style.BRIGHT}📱 Telefon Numarası (+90 Olmadan, Birden Fazla İçin Enter Bas): {Fore.GREEN}", end="")
-        tel_no = input()
-        tel_liste = []
-        sonsuz = ""
-        if tel_no == "":
-            print(f"{Fore.YELLOW}📁 Dosya Dizinini Gir: {Fore.GREEN}", end="")
-            dizin = input()
-            try:
-                with open(dizin, "r", encoding="utf-8") as f:
-                    for i in f.read().strip().split("\n"):
-                        if len(i) == 10:
-                            tel_liste.append(i)
-                sonsuz = "(Sonsuz İçin Enter Bas / Infinite: Enter)"
-            except FileNotFoundError:
-                print(f"{Fore.RED + Style.BRIGHT}❌ Dosya Bulunamadı! / File Not Found!{Style.RESET_ALL}")
-                sleep(3)
-                continue
-        else:
-            try:
-                int(tel_no)
-                if len(tel_no) != 10:
-                    raise ValueError
-                tel_liste.append(tel_no)
-                sonsuz = "(Sonsuz İçin Enter Bas / Infinite: Enter)"
-            except ValueError:
-                print(f"{Fore.RED + Style.BRIGHT}❌ Geçersiz Numara! / Invalid Number!{Style.RESET_ALL}")
-                sleep(3)
+    while True:
+        if token_manager.token is None:
+            if not token_manager.get_token_from_user():
                 continue
         
-        print(f"{Fore.YELLOW + Style.BRIGHT}📧 E-posta Adresi (Bilmiyorsan Enter): {Fore.GREEN}", end="")
-        mail = input()
-        if mail and ("@" not in mail or ".com" not in mail):
-            print(f"{Fore.RED + Style.BRIGHT}❌ Geçersiz E-posta! / Invalid Email!{Style.RESET_ALL}")
+        system("clear")
+        print_banner()
+        
+        servisler_sms = []
+        for attribute in dir(SendSms):
+            attribute_value = getattr(SendSms, attribute)
+            if callable(attribute_value):
+                if attribute.startswith('__') == False:
+                    servisler_sms.append(attribute)
+
+        try:
+            menu = input(f"{Fore.MAGENTA + Style.BRIGHT + Back.BLACK}╔═[ {Fore.WHITE}SCORPION MENU{Fore.MAGENTA} ]═╗{Style.RESET_ALL}\n"
+                         f"{Fore.CYAN + Style.BRIGHT}║{Fore.WHITE} 1. {Fore.GREEN}SMS Gönder (Normal Mode){Fore.WHITE}           ║{Style.RESET_ALL}\n"
+                         f"{Fore.CYAN}║{Fore.WHITE} 2. {Fore.GREEN}SMS Gönder (Turbo Mode){Fore.WHITE}           ║{Style.RESET_ALL}\n"
+                         f"{Fore.CYAN}║{Fore.WHITE} 3. {Fore.RED}Çıkış / Exit{Fore.WHITE}                     ║{Style.RESET_ALL}\n"
+                         f"{Fore.MAGENTA + Style.BRIGHT}╚{'═' * 48}╝{Style.RESET_ALL}\n\n"
+                         f"{Fore.YELLOW + Style.BRIGHT}Seçimini Yap / Choose: {Fore.GREEN}")
+            if menu == "":
+                continue
+            menu = int(menu)
+        except ValueError:
+            print(f"{Fore.RED + Style.BRIGHT}❌ Hatalı Giriş! Lütfen Sayı Giriniz. / Invalid Input! Please Enter a Number.{Style.RESET_ALL}")
             sleep(3)
             continue
-        
-        print(f"{Fore.YELLOW + Style.BRIGHT}📤 Kaç SMS? {sonsuz}: {Fore.GREEN}", end="")
-        kere_input = input()
-        if kere_input:
+
+        if menu == 1:
+            print_banner()
+            print(f"{Fore.YELLOW + Style.BRIGHT}📱 Telefon Numarası (+90 Olmadan, Birden Fazla İçin Enter Bas): {Fore.GREEN}", end="")
+            tel_no = input()
+            tel_liste = []
+            sonsuz = ""
+            if tel_no == "":
+                print(f"{Fore.YELLOW}📁 Dosya Dizinini Gir: {Fore.GREEN}", end="")
+                dizin = input()
+                try:
+                    with open(dizin, "r", encoding="utf-8") as f:
+                        for i in f.read().strip().split("\n"):
+                            if len(i) == 10:
+                                tel_liste.append(i)
+                    sonsuz = "(Sonsuz İçin Enter Bas / Infinite: Enter)"
+                except FileNotFoundError:
+                    print(f"{Fore.RED + Style.BRIGHT}❌ Dosya Bulunamadı! / File Not Found!{Style.RESET_ALL}")
+                    sleep(3)
+                    continue
+            else:
+                try:
+                    int(tel_no)
+                    if len(tel_no) != 10:
+                        raise ValueError
+                    tel_liste.append(tel_no)
+                    sonsuz = "(Sonsuz İçin Enter Bas / Infinite: Enter)"
+                except ValueError:
+                    print(f"{Fore.RED + Style.BRIGHT}❌ Geçersiz Numara! / Invalid Number!{Style.RESET_ALL}")
+                    sleep(3)
+                    continue
+            
+            print(f"{Fore.YELLOW + Style.BRIGHT}📧 E-posta Adresi (Bilmiyorsan Enter): {Fore.GREEN}", end="")
+            mail = input()
+            if mail and ("@" not in mail or ".com" not in mail):
+                print(f"{Fore.RED + Style.BRIGHT}❌ Geçersiz E-posta! / Invalid Email!{Style.RESET_ALL}")
+                sleep(3)
+                continue
+            
+            print(f"{Fore.YELLOW + Style.BRIGHT}📤 Kaç SMS? {sonsuz}: {Fore.GREEN}", end="")
+            kere_input = input()
+            if kere_input:
+                try:
+                    kere = int(kere_input)
+                except ValueError:
+                    print(f"{Fore.RED + Style.BRIGHT}❌ Hatalı Sayı! / Invalid Number!{Style.RESET_ALL}")
+                    sleep(3)
+                    continue
+            else:
+                kere = None
+            
+            print(f"{Fore.YELLOW + Style.BRIGHT}⏱️ Saniye Aralığı: {Fore.GREEN}", end="")
             try:
-                kere = int(kere_input)
+                aralik = int(input())
             except ValueError:
                 print(f"{Fore.RED + Style.BRIGHT}❌ Hatalı Sayı! / Invalid Number!{Style.RESET_ALL}")
                 sleep(3)
                 continue
-        else:
-            kere = None
+            
+            print(f"{Fore.CYAN + Style.BRIGHT}🚀 Gönderim Başlatılıyor... / Sending Started...{Style.RESET_ALL}")
+            
+            if kere is None and len(tel_liste) == 1:
+                sms = SendSms(tel_liste[0], mail)
+                while True:
+                    for attribute in servisler_sms:
+                        exec(f"sms.{attribute}()")
+                        sleep(aralik)
+            else:
+                for i in tel_liste:
+                    sms = SendSms(i, mail)
+                    if isinstance(kere, int):
+                        while sms.adet < kere:
+                            for attribute in servisler_sms:
+                                if sms.adet >= kere:
+                                    break
+                                exec(f"sms.{attribute}()")
+                                sleep(aralik)
+            
+            print(f"{Fore.GREEN + Style.BRIGHT}✅ Tamamlandı! Menüye Dönmek İçin Enter... / Completed! Enter to Menu...{Style.RESET_ALL}")
+            input()
         
-        print(f"{Fore.YELLOW + Style.BRIGHT}⏱️ Saniye Aralığı: {Fore.GREEN}", end="")
-        try:
-            aralik = int(input())
-        except ValueError:
-            print(f"{Fore.RED + Style.BRIGHT}❌ Hatalı Sayı! / Invalid Number!{Style.RESET_ALL}")
-            sleep(3)
-            continue
-        
-        print(f"{Fore.CYAN + Style.BRIGHT}🚀 Gönderim Başlatılıyor... / Sending Started...{Style.RESET_ALL}")
-        
-        if kere is None and len(tel_liste) == 1:
-            sms = SendSms(tel_liste[0], mail)
-            while True:
-                for attribute in servisler_sms:
-                    exec(f"sms.{attribute}()")
-                    sleep(aralik)
-        else:
-            for i in tel_liste:
-                sms = SendSms(i, mail)
-                if isinstance(kere, int):
-                    while sms.adet < kere:
-                        for attribute in servisler_sms:
-                            if sms.adet >= kere:
-                                break
-                            exec(f"sms.{attribute}()")
-                            sleep(aralik)
-        
-        print(f"{Fore.GREEN + Style.BRIGHT}✅ Tamamlandı! Menüye Dönmek İçin Enter... / Completed! Enter to Menu...{Style.RESET_ALL}")
-        input()
-    
-    elif menu == 3:
-        print(f"{Fore.RED + Style.BRIGHT}👋 Çıkış Yapılıyor... / Exiting...{Style.RESET_ALL}")
-        sleep(2)
-        break
-    
-    elif menu == 2:
-        print_banner()
-        print(f"{Fore.YELLOW + Style.BRIGHT}📱 Telefon Numarası (+90 Olmadan): {Fore.GREEN}", end="")
-        tel_no = input()
-        try:
-            int(tel_no)
-            if len(tel_no) != 10:
-                raise ValueError
-        except ValueError:
-            print(f"{Fore.RED + Style.BRIGHT}❌ Geçersiz Numara! / Invalid Number!{Style.RESET_ALL}")
-            sleep(3)
-            continue
-        
-        print(f"{Fore.YELLOW + Style.BRIGHT}📧 E-posta Adresi (Bilmiyorsan Enter): {Fore.GREEN}", end="")
-        mail = input()
-        if mail and ("@" not in mail or ".com" not in mail):
-            print(f"{Fore.RED + Style.BRIGHT}❌ Geçersiz E-posta! / Invalid Email!{Style.RESET_ALL}")
-            sleep(3)
-            continue
-        
-        print(f"{Fore.CYAN + Style.BRIGHT}⚡ Turbo Modu Başlatılıyor... / Turbo Mode Started...{Style.RESET_ALL}")
-        send_sms = SendSms(tel_no, mail)
-        dur = threading.Event()
-        
-        def Turbo():
-            while not dur.is_set():
-                threads = []
-                for fonk in servisler_sms:
-                    t = threading.Thread(target=getattr(send_sms, fonk), daemon=True)
-                    threads.append(t)
-                    t.start()
-                for t in threads:
-                    t.join()
-        
-        try:
-            Turbo()
-        except KeyboardInterrupt:
-            dur.set()
-            print(f"{Fore.YELLOW + Style.BRIGHT}⏹️ Durduruldu! Menüye Dönülüyor... / Stopped! Returning to Menu...{Style.RESET_ALL}")
+        elif menu == 3:
+            print(f"{Fore.RED + Style.BRIGHT}👋 Çıkış Yapılıyor... / Exiting...{Style.RESET_ALL}")
             sleep(2)
+            break
+        
+        elif menu == 2:
+            print_banner()
+            print(f"{Fore.YELLOW + Style.BRIGHT}📱 Telefon Numarası (+90 Olmadan): {Fore.GREEN}", end="")
+            tel_no = input()
+            try:
+                int(tel_no)
+                if len(tel_no) != 10:
+                    raise ValueError
+            except ValueError:
+                print(f"{Fore.RED + Style.BRIGHT}❌ Geçersiz Numara! / Invalid Number!{Style.RESET_ALL}")
+                sleep(3)
+                continue
+            
+            print(f"{Fore.YELLOW + Style.BRIGHT}📧 E-posta Adresi (Bilmiyorsan Enter): {Fore.GREEN}", end="")
+            mail = input()
+            if mail and ("@" not in mail or ".com" not in mail):
+                print(f"{Fore.RED + Style.BRIGHT}❌ Geçersiz E-posta! / Invalid Email!{Style.RESET_ALL}")
+                sleep(3)
+                continue
+            
+            print(f"{Fore.CYAN + Style.BRIGHT}⚡ Turbo Modu Başlatılıyor... / Turbo Mode Started...{Style.RESET_ALL}")
+            send_sms = SendSms(tel_no, mail)
+            dur = threading.Event()
+            
+            def Turbo():
+                while not dur.is_set():
+                    threads = []
+                    for fonk in servisler_sms:
+                        t = threading.Thread(target=getattr(send_sms, fonk), daemon=True)
+                        threads.append(t)
+                        t.start()
+                    for t in threads:
+                        t.join()
+            
+            try:
+                Turbo()
+            except KeyboardInterrupt:
+                dur.set()
+                print(f"{Fore.YELLOW + Style.BRIGHT}⏹️ Durduruldu! Menüye Dönülüyor... / Stopped! Returning to Menu...{Style.RESET_ALL}")
+                sleep(2)
+
+if __name__ == "__main__":
+    main()
